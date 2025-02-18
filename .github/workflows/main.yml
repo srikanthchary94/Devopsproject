@@ -40,7 +40,7 @@ jobs:
       # Step 6: Set up kubectl for AKS
       - name: Set up AKS credentials
         run: |
-          az aks get-credentials --resource-group Devopsproject --name nodejsfrontend
+          az aks get-credentials --resource-group Devopsproject --name nodejsfronend
 
       # Step 7: Deploy to AKS using deployment.yaml and service.yaml
       - name: Deploy to AKS
