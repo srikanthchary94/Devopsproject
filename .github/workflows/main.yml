@@ -45,8 +45,8 @@ jobs:
       # Step 7: Deploy to AKS using deployment.yaml and service.yaml
       - name: Deploy to AKS
         run: |
-          kubectl apply -f deployment.yaml
-          kubectl apply -f service.yaml
+          kubectl apply -f frontend/deployment.yaml
+          kubectl apply -f frontend/service.yaml
           kubectl set image deployment/nodejs-app nodejs-app=devopsproject1.azurecr.io/devopsproject1:${{ github.sha }} -n default
           kubectl rollout status deployment/nodejs-app -n default
 
