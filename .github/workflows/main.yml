@@ -1,44 +1,62 @@
-name: CI/CD to Azure Kubernetes Service (AKS)
+name: Azure Kubernetes Deployment
 
 on:
   push:
     branches:
-      - main  # Change if your main branch is different
+      - main  # Trigger on push to main branch
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
-      # Step 1: Checkout code from GitHub
-      - name: Checkout repository
-        uses: actions/checkout@v4
 
-      # Step 2: Login to Azure
-      - name: Login to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+    # Step 1: Checkout the repository
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      # Step 3: Login to Azure Container Registry (ACR)
-      - name: Login to ACR
-        run: az acr login --name devopsproject1
+    # Step 2: Log in to Azure
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Step 4: Build and Push Docker Image to ACR
-      - name: Build and Push Docker Image
-        run: |
-          IMAGE_TAG=devopsproject1.azurecr.io/devopsproject1:latest
-          docker build -t $IMAGE_TAG .
-          docker push $IMAGE_TAG
+    # Step 3: Set up Docker Buildx
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
 
-      # Step 5: Set up kubectl for AKS
-      - name: Set up AKS credentials
-        run: |
-          az aks get-credentials --resource-group Devopsproject --name nodejsfrontend
+    # Step 4: Log in to ACR
+    - name: Login to ACR
+      run: |
+        ACR_NAME=${{ secrets.ACR_NAME }}
+        az acr login --name $ACR_NAME
 
-      # Step 6: Deploy to AKS using deployment.yaml and service.yaml
-      - name: Deploy to AKS
-        run: |
-          kubectl apply -f deployment.yaml
-          kubectl apply -f service.yaml
-          kubectl rollout status deployment/nodejs-app
+    # Step 5: Build and Push Docker image
+    - name: Build and Push Docker image
+      run: |
+        ACR_NAME=${{ secrets.ACR_NAME }}
+        IMAGE_NAME=devopsproject1
+        IMAGE_TAG=${{ github.sha }}
+
+        docker build -t $ACR_NAME.azurecr.io/$IMAGE_NAME:$IMAGE_TAG .
+        docker push $ACR_NAME.azurecr.io/$IMAGE_NAME:$IMAGE_TAG
+
+    # Step 6: Set up kubectl
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v1
+
+    # Step 7: Configure AKS credentials
+    - name: Azure AKS Set Context
+      run: |
+        az aks get-credentials --resource-group Devopsproject --name nodejsfronend
+
+    # Step 8: Deploy to AKS
+    - name: Deploy to AKS
+      run: |
+        kubectl set image deployment/devopsproject1 devopsproject1=${{ secrets.ACR_NAME }}.azurecr.io/devopsproject1:${{ github.sha }} -n default
+        kubectl rollout status deployment/devopsproject1 -n default
+
+    # Step 9: Verify Deployment
+    - name: Verify Deployment
+      run: |
+        kubectl get pods -n default
+
