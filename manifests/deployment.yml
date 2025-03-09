@@ -1,0 +1,19 @@
+apiVersion : apps/v1
+kind: Deployment
+metadata:
+  name: srikanthcharydevopsproject 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: srikanthcharydevopsproject
+  template:
+    metadata:
+      labels:
+        app: srikanthcharydevopsproject 
+    spec:
+      containers:
+        - name: srikanthcharydevopsproject 
+          image: devopsproject1.azurecr.io/srikanthcharydevopsproject
+          ports:
+          - containerPort: 3000
